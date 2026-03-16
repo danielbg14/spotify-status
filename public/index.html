@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Spotify Widget</title>
+
+<style>
+
+* {
+	--corner-radius: 10px;
+	--album-art-size: 100px;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+	margin: 0;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #0f0f0f;
+}
+
+#statusContainer {
+	font-weight: 500;
+	font-size: 30px;
+	text-align: center;
+	background-color: #D12025;
+	color: white;
+	padding: 10px;
+	border-radius: 10px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	opacity: 0;
+}
+
+#mainContainer {
+	font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+	display: flex;
+	height: var(--album-art-size);
+	margin: 20px;
+	filter: drop-shadow(15px 15px 7px rgba(0, 0, 0, 1));
+	width: 100%;
+	max-width: 500px;
+	opacity: 0;
+	transition: all 0.5s ease;
+}
+
+#albumArtBox {
+	background: rgba(0, 0, 0, 0.5);
+	position: relative;
+	border-radius: var(--corner-radius);
+	overflow: hidden;
+	margin: 0px 8px 0px 0px;
+	object-fit: cover;
+	width: var(--album-art-size);
+}
+
+#albumArt {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 0%;
+	object-fit: cover;
+}
+#albumArtBack {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+#songInfoBox {
+	position: relative;
+	color: white;
+	width: calc(100% - 125px);
+	display: flex;
+	flex-direction: column;
+	flex: 0 1 auto;
+	justify-content: center;
+	z-index: 1;
+	text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
+	overflow: hidden;
+	z-index: 4;
+}
+
+#songInfo {
+	position: relative;
+	border-radius: var(--corner-radius);
+	height: 100%;
+	overflow: hidden;
+}
+
+#IAmRunningOutOfNamesForTheseBoxes {
+	position: absolute;
+	width: calc(100% - 40px);
+	left: 50%;
+	top: 50%;
+	-ms-transform: translate(-50%, -50%);
+	transform: translate(-50%, -50%);
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 0px 20px;
+}
+
+#backgroundArt {
+	position: absolute;
+	height: 100%;
+	width: 100%;
+	border-radius: var(--corner-radius);
+	overflow: hidden;
+	z-index: -1;
+	opacity: 0.9;
+}
+
+#backgroundImage {
+	filter: blur(20px);
+	position: absolute;
+	width: 140%;
+	top: 50%;
+	left: 50%;
+	transform: translateX(-50%) translateY(-50%);
+}
+
+#backgroundImageBack {
+	filter: blur(20px);
+	position: absolute;
+	width: 140%;
+	top: 50%;
+	left: 50%;
+	transform: translateX(-50%) translateY(-50%);
+	z-index: -1;
+}
+
+#artistLabel {
+	font-size: 16px;
+	font-weight: 400;
+	line-height: 1;
+	white-space: nowrap;
+	transition: all 0.5s ease;
+}
+
+#songLabel {
+	font-weight: bold;
+	font-size: 20px;
+	line-height: 1.5;
+	width: calc(100%);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	transition: opacity 0.5s ease;
+	position: relative;
+	padding-bottom: 2px;
+}
+
+#songLabel.scrolling {
+	overflow: hidden;
+	text-overflow: clip;
+}
+
+#songLabel.scrolling .scroll-inner {
+	display: inline-block;
+	white-space: nowrap;
+	will-change: transform;
+}
+
+#progressBg {
+	flex: 1;
+	height: 5px;
+	border-radius: 5px;
+	background-color: rgba(255,255,255,0.25);
+	align-self: center;
+}
+
+#progressBar {
+	border-radius: 5px;
+	height: 5px;
+	width: 20%;
+	background-color: #ffffff;
+	transition: all 1s ease;
+}
+
+#times {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	font-weight: 600;
+	opacity: 0.8;
+	margin-top: 6px;
+}
+
+#progressTime {
+}
+
+#timeRemaining {
+}
+
+.text-show {
+	opacity: 1;
+	transition: opacity 0.25s ease;
+}
+
+.text-fade {
+	opacity: 0;
+	transition: opacity 0.25s ease;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="statusContainer">Connecting...</div>
+
+<div id="mainContainer">
+
+<div id="albumArtBox">
+<img id="albumArt">
+<img id="albumArtBack">
+</div>
+
+<div id="songInfoBox">
+
+<div id="songInfo">
+
+<div id="backgroundArt">
+<img id="backgroundImage">
+<img id="backgroundImageBack">
+</div>
+
+<div id="IAmRunningOutOfNamesForTheseBoxes">
+
+<div id="songLabel"></div>
+
+<div id="artistLabel"></div>
+
+<div id="times">
+<div id="progressTime">0:00</div>
+<div id="progressBg"><div id="progressBar"></div></div>
+<div id="timeRemaining">-0:00</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const albumArt = document.getElementById("albumArt");
+const albumArtBack = document.getElementById("albumArtBack");
+const backgroundImage = document.getElementById("backgroundImage");
+const backgroundImageBack = document.getElementById("backgroundImageBack");
+const songLabel = document.getElementById("songLabel");
+const artistLabel = document.getElementById("artistLabel");
+
+const progressBar = document.getElementById("progressBar");
+const progressTime = document.getElementById("progressTime");
+const timeRemaining = document.getElementById("timeRemaining");
+
+const statusContainer = document.getElementById("statusContainer");
+const mainContainer = document.getElementById("mainContainer");
+
+let lastTrack=null;
+
+/* time format */
+
+function format(ms){
+
+const m=Math.floor(ms/60000);
+const s=Math.floor((ms%60000)/1000).toString().padStart(2,"0");
+
+return m+":"+s;
+
+}
+
+let scrollAnimationFrame = null;
+let scrollState = null;
+let scrollInner = null;
+
+function stopScrollAnimation() {
+	if (scrollAnimationFrame) {
+		cancelAnimationFrame(scrollAnimationFrame);
+		scrollAnimationFrame = null;
+	}
+	scrollState = null;
+}
+
+function createScrollInner() {
+	const text = songLabel.textContent || "";
+	songLabel.innerHTML = "";
+	scrollInner = document.createElement("span");
+	scrollInner.className = "scroll-inner";
+	scrollInner.textContent = text;
+	songLabel.appendChild(scrollInner);
+}
+
+function checkAndApplyScrolling(){
+	stopScrollAnimation();
+	songLabel.classList.remove("scrolling");
+
+	createScrollInner();
+
+	// Use getBoundingClientRect for sub-pixel accuracy and to avoid 0 width before layout
+	const containerWidth = songLabel.getBoundingClientRect().width;
+	const textWidth = scrollInner.getBoundingClientRect().width;
+
+	// If container isn't laid out yet, retry on next frame.
+	if (containerWidth < 2 || textWidth < 2) {
+		requestAnimationFrame(checkAndApplyScrolling);
+		return;
+	}
+
+	// No scrolling needed if text fits
+	if (textWidth <= containerWidth + 1) {
+		scrollInner.style.transform = "translateX(0px)";
+		return;
+	}
+
+	songLabel.classList.add("scrolling");
+	startScrollLoop(containerWidth, textWidth);
+}
+
+function startScrollLoop(containerWidth, textWidth) {
+	const SPEED_PX_PER_SEC = 80;
+	const PAUSE_START_MS = 1500; // show static at start
+	const PAUSE_END_MS = 800; // pause when text is fully off-screen
+	const GAP_PX = 20; // extra spacing to ensure text is fully hidden
+
+	const startX = 0;
+	const offScreenX = -(textWidth + GAP_PX);
+	const enterStartX = containerWidth;
+
+	const scrollOffDuration = (Math.abs(offScreenX - startX) / SPEED_PX_PER_SEC) * 1000;
+	const enterDuration = (enterStartX - startX) / SPEED_PX_PER_SEC * 1000;
+
+	const phases = [
+		{ startX, endX: startX, duration: PAUSE_START_MS },
+		{ startX, endX: offScreenX, duration: scrollOffDuration },
+		{ startX: offScreenX, endX: offScreenX, duration: PAUSE_END_MS },
+		{ startX: enterStartX, endX: startX, duration: enterDuration },
+	];
+
+	scrollState = { phases, currentPhase: 0, phaseStartTime: null };
+
+	function tick(timestamp) {
+		if (!scrollState) return;
+
+		const phase = scrollState.phases[scrollState.currentPhase];
+		if (scrollState.phaseStartTime === null) {
+			scrollState.phaseStartTime = timestamp;
+			scrollInner.style.transform = `translateX(${phase.startX}px)`;
+		}
+
+		const elapsed = timestamp - scrollState.phaseStartTime;
+		const progress = phase.duration > 0 ? Math.min(1, elapsed / phase.duration) : 1;
+		const currentX = phase.startX + (phase.endX - phase.startX) * progress;
+		scrollInner.style.transform = `translateX(${currentX}px)`;
+
+		if (elapsed >= phase.duration) {
+			scrollState.currentPhase = (scrollState.currentPhase + 1) % scrollState.phases.length;
+			scrollState.phaseStartTime = null;
+		}
+
+		scrollAnimationFrame = requestAnimationFrame(tick);
+	}
+
+	scrollAnimationFrame = requestAnimationFrame(tick);
+}
+
+/* update widget */
+
+async function update(){
+
+try{
+
+const res=await fetch("/api/spotify");
+const data=await res.json();
+
+if(!data.playing){
+statusContainer.style.opacity=1;
+mainContainer.style.opacity=0;
+return;
+}
+
+statusContainer.style.opacity=0;
+mainContainer.style.opacity=1;
+
+const track=data.song+data.artist;
+
+if(track!==lastTrack){
+
+lastTrack=track;
+
+songLabel.classList.remove("text-show");
+artistLabel.classList.remove("text-show");
+
+setTimeout(()=>{
+
+songLabel.textContent=data.song;
+artistLabel.textContent=data.artist;
+albumArt.src=data.cover;
+albumArtBack.src=data.cover;
+backgroundImage.src=data.cover;
+backgroundImageBack.src=data.cover;
+
+songLabel.classList.add("text-show");
+artistLabel.classList.add("text-show");
+
+checkAndApplyScrolling();
+
+},250);
+
+}
+
+/* progress */
+
+const percent = data.duration > 0 ? Math.min(100, (data.progress / data.duration) * 100) : 0;
+
+progressBar.style.width = percent + "%";
+
+progressTime.textContent = format(data.progress);
+
+if (data.duration > 0) {
+  timeRemaining.textContent = "-" + format(Math.max(0, data.duration - data.progress));
+} else {
+  timeRemaining.textContent = "";
+}
+
+}catch(e){
+
+statusContainer.style.opacity=1;
+mainContainer.style.opacity=0;
+
+}
+
+}
+
+setInterval(update,1000);
+update();
+
+window.addEventListener("resize", checkAndApplyScrolling);
+
+</script>
+
+</body>
+</html>

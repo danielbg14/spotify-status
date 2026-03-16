@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+    # Uncomment below to use a local .env file automatically.
+    # env_file:
+    #   - .env
